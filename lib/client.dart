@@ -1,6 +1,7 @@
+import 'dart:io';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:nsd/nsd.dart';
-
 // make a stateful widget that shows the text 'player'
 
 class ClientPage extends StatefulWidget {
@@ -12,8 +13,11 @@ class ClientPage extends StatefulWidget {
 class ClientState extends State<ClientPage> {
   late Registration r;
   late Discovery d;
+  late Socket s;
+  String address = "";
   String status = "nil";
   List<String> servers = [];
+  AudioPlayer player = AudioPlayer();
   @override
   void initState() {
     super.initState();
@@ -44,9 +48,35 @@ class ClientState extends State<ClientPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Text(status),
+          Text(address),
+          ListView.builder(
+            shrinkWrap: true,
+            itemCount: servers.length,
+            itemBuilder: (BuildContext context, int index) {
+              return ListTile(
+                  onTap: () async {
+                    final service = d.services.elementAt(index);
+                    print("Connecting to ${service.host}:${service.port!}");
+                    s = await Socket.connect(service.host, service.port!);
+                    // play the stream using audioplayers
+                    s.listen((event) {
+                      //TODO
+                    });
+                    setState(() {
+                      address = servers[index];
+                    });
+                  },
+                  title: Text(servers[index]));
+            },
+          ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
   }
 }

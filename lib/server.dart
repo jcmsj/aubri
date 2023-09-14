@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:aubri/record.dart';
 import 'package:flutter/material.dart';
 import 'package:nsd/nsd.dart';
 
@@ -26,10 +29,20 @@ class ServerPage extends StatefulWidget {
 
 class ServiceState extends State<ServerPage> {
   AubriService? aubri;
+  ServerSocket? server;
   @override
   void initState() {
     super.initState();
-    AubriService.init().then((it) => aubri = it);
+    reinit();
+  }
+
+  void reinit() {
+    AubriService.init().then((it) async {
+      setState(() async {
+        aubri = it;
+        server = await makeAudioServer(aubri!.registration);
+      });
+    });
   }
 
   @override
@@ -40,9 +53,25 @@ class ServiceState extends State<ServerPage> {
         children: <Widget>[
           const Text('Aubri is running.'),
           const Text('Press the button to stop the server.'),
+          Text(server?.address.address ?? ''),
           Text(aubri?.registration.service.type ?? ''),
         ],
       ),
     );
+  }
+
+  @override
+  void activate() {
+    // TODO: implement activate
+    super.activate();
+    reinit();
+  }
+
+  @override
+  void deactivate() {
+    // TODO: implement deactivate
+    super.deactivate();
+    aubri?.stop();
+    server?.close();
   }
 }
